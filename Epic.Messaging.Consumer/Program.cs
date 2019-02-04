@@ -11,7 +11,7 @@ namespace Epic.Messaging.Consumer
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
 
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
@@ -47,7 +47,7 @@ namespace Epic.Messaging.Consumer
         private static void ExecuteAsync(string queueName)
         {
             var subscriber = new Subscriber();
-            subscriber.ReceiveMessageAsync(queueName);
+            subscriber.Subscribe(queueName);
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>

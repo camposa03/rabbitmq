@@ -1,4 +1,5 @@
-﻿using Epic.Rabbit.Subscriber;
+﻿using Epic.Messaging.Contracts;
+using Epic.Rabbit.Subscriber;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.WindowsServices;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,11 +12,20 @@ namespace Epic.Messaging.Consumer
     internal class CustomWebHostService : WebHostService
     {
         private readonly ILogger _logger;
+        private readonly ISubscriber _subscriber;
+
         public CustomWebHostService(IWebHost host) : base(host)
         {
-            _logger = host.Services.GetRequiredService<ILogger<CustomWebHostService>>();
             
         }
+        public CustomWebHostService(IWebHost host, ISubscriber subscriber) : base(host)
+        {
+            _logger = host.Services.GetRequiredService<ILogger<CustomWebHostService>>();
+            _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber)); 
+            
+        }
+
+  
         protected override void OnStarting(string[] args)
         {
             _logger.LogInformation("OnStarting method called.");
@@ -38,7 +48,7 @@ namespace Epic.Messaging.Consumer
             try
             {
                 var subscriber = new Subscriber();
-                subscriber.ReceiveMessageAsync("test");
+                _subscriber.Subscribe("test");
             }
             catch (Exception e)
             {

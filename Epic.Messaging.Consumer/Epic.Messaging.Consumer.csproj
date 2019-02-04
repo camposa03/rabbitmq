@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Epic.Messaging.Contracts\Epic.Messaging.Contracts.csproj" />
     <ProjectReference Include="..\Epic.Rabbit.Subscriber\Epic.Rabbit.Subscriber.csproj" />
   </ItemGroup>
 

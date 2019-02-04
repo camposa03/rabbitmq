@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Epic.Messaging.Contracts;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Epic.Rabbit.Subscriber
 {
-    public class Subscriber
+    public class Subscriber : ISubscriber
     {
         public void ReceiveMessage(string queueName)
         {
@@ -36,7 +37,7 @@ namespace Epic.Rabbit.Subscriber
             }
         }
 
-        public void ReceiveMessageAsync(string queueName)
+        public void Subscribe(string queueName)
         {
             var factory = new ConnectionFactory() { HostName = "localhost", DispatchConsumersAsync = true };
             var connection = factory.CreateConnection();
