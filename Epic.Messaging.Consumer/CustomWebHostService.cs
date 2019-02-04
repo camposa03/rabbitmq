@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.WindowsServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
 
 namespace Epic.Messaging.Consumer
 {
@@ -12,25 +14,50 @@ namespace Epic.Messaging.Consumer
         public CustomWebHostService(IWebHost host) : base(host)
         {
             _logger = host.Services.GetRequiredService<ILogger<CustomWebHostService>>();
+            
         }
         protected override void OnStarting(string[] args)
         {
             _logger.LogInformation("OnStarting method called.");
             base.OnStarting(args);
+
+            try
+            {
+                File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", "About to start...");
+
+            }
+            catch (Exception e)
+            {
+                File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", e.ToString());
+            }
         }
         protected override void OnStarted()
         {
             _logger.LogInformation("OnStarted method called.");
             base.OnStarted();
-
-            var subscriber = new Subscriber();
-            subscriber.ReceiveMessageAsync("test");
+            try
+            {
+                var subscriber = new Subscriber();
+                subscriber.ReceiveMessageAsync("test");
+            }
+            catch (Exception e)
+            {
+                File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", e.ToString());             
+            }  
         }
 
         protected override void OnStopping()
         {
             _logger.LogInformation("OnStopping method called.");
             base.OnStopping();
+        }
+
+        internal void TestStartupAndStop(string[] args)
+        {
+            OnStarting(args);
+            OnStarted();
+            Console.ReadLine();
+            OnStopping();
         }
     }
 }

@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore;
+﻿using Epic.Rabbit.Subscriber;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Epic.Messaging.Consumer
@@ -15,7 +13,9 @@ namespace Epic.Messaging.Consumer
     {
         public static async Task Main(string[] args)
         {
+
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
+            
             var builder = CreateWebHostBuilder(
                 args.Where(arg => arg != "--console").ToArray());
 
@@ -33,54 +33,21 @@ namespace Epic.Messaging.Consumer
                 // To run the app without the CustomWebHostService change the
                 // next line to host.RunAsService();
                 host.RunAsCustomService();
+                
             }
             else
             {
-                await ExecuteAsync();
+                ExecuteAsync("test");
 
                 Console.ReadLine();
-
             }
-
-
         }
 
-        private static Task ExecuteAsync()
+
+        private static void ExecuteAsync(string queueName)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost", DispatchConsumersAsync = true };
-            var connection = factory.CreateConnection();
-            var channel = connection.CreateModel();
-            {
-                channel.QueueDeclare(queue: "test",
-                                     durable: true,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
-
-                File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", "Created channel");
-
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.Received += async (model, ea) =>
-                {
-                    await Task.Delay(5000);
-                    var body = ea.Body;
-                    var message = Encoding.UTF8.GetString(body);
-                    Console.WriteLine(message);
-
-                    File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", message);
-                    channel.BasicAck(ea.DeliveryTag, false);
-
-                    Console.WriteLine($"Acknowledged message with DeliveryTag: {ea.DeliveryTag}");             
-
-                };
-
-                channel.BasicConsume(queue: "test",
-                                     autoAck: false,
-                                     consumer: consumer);
-                
-            }
-
-            return Task.FromResult(0);
+            var subscriber = new Subscriber();
+            subscriber.ReceiveMessageAsync(queueName);
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
