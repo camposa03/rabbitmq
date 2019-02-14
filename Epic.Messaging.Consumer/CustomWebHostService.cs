@@ -1,9 +1,11 @@
 ﻿using Epic.Messaging.Contracts;
 using Epic.Rabbit.Subscriber;
+using Epic.Rabbit.Subscriber.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.WindowsServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 
@@ -13,16 +15,17 @@ namespace Epic.Messaging.Consumer
     {
         private readonly ILogger _logger;
         private readonly ISubscriber _subscriber;
+        private readonly RabbitSettings _options;
 
         public CustomWebHostService(IWebHost host) : base(host)
         {
             
         }
-        public CustomWebHostService(IWebHost host, ISubscriber subscriber) : base(host)
+        public CustomWebHostService(IWebHost host, ISubscriber subscriber, IOptions<RabbitSettings> options) : base(host)
         {
             _logger = host.Services.GetRequiredService<ILogger<CustomWebHostService>>();
-            _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber)); 
-            
+            _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
   
@@ -47,7 +50,7 @@ namespace Epic.Messaging.Consumer
             base.OnStarted();
             try
             {
-                var subscriber = new Subscriber();
+                //var subscriber = new Subscriber(Options.Create(_options));
                 _subscriber.Subscribe("test");
             }
             catch (Exception e)

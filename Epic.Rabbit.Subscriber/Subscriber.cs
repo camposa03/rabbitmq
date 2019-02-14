@@ -1,4 +1,7 @@
 ﻿using Epic.Messaging.Contracts;
+using Epic.Rabbit.Subscriber.Settings;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -11,9 +14,14 @@ namespace Epic.Rabbit.Subscriber
 {
     public class Subscriber : ISubscriber
     {
+        private readonly RabbitSettings _options;
+        public Subscriber(IOptions<RabbitSettings> options)
+        {
+            _options = options.Value;
+        }
         public void ReceiveMessage(string queueName)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            var factory = new ConnectionFactory() { HostName = _options.Hostname };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
@@ -39,7 +47,7 @@ namespace Epic.Rabbit.Subscriber
 
         public void Subscribe(string queueName)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost", DispatchConsumersAsync = true };
+            var factory = new ConnectionFactory() { HostName = _options.Hostname, DispatchConsumersAsync = true };
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
             {
@@ -57,9 +65,10 @@ namespace Epic.Rabbit.Subscriber
                     await Task.Delay(2000);
                     var body = ea.Body;
                     var message = Encoding.UTF8.GetString(body);
-                    Console.WriteLine(message);
+                    Console.WriteLine($"Message Received: {message}");
 
-                    File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", message);
+                    File.WriteAllText("C:\\Temp\\rabbit_subscriber.txt", message);
+                    
                     channel.BasicAck(ea.DeliveryTag, false);
 
                     Console.WriteLine($"Acknowledged message with DeliveryTag: {ea.DeliveryTag}");

@@ -1,11 +1,12 @@
 ﻿using Epic.Rabbit.Subscriber;
+using Epic.Rabbit.Subscriber.Settings;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Epic.Messaging.Consumer
 {
@@ -37,16 +38,19 @@ namespace Epic.Messaging.Consumer
             }
             else
             {
-                ExecuteAsync("test");
+                var options = host.Services.GetService(typeof(IOptions<RabbitSettings>)) as IOptions<RabbitSettings>;
+                   
+                ExecuteAsync("Epic.Request", options);
 
                 Console.ReadLine();
             }
         }
 
 
-        private static void ExecuteAsync(string queueName)
+        private static void ExecuteAsync(string queueName, IOptions<RabbitSettings> options)
         {
-            var subscriber = new Subscriber();
+            
+            var subscriber = new Subscriber(options);
             subscriber.Subscribe(queueName);
         }
 
