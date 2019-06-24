@@ -9,16 +9,18 @@
         /// <summary>
         /// The hostname of the RabbitMQ server
         /// </summary>
-        public string Hostname { get; set; }
+        public string Hostname { get; set; } = "localhost";
 
         /// <summary>
         /// The username used to connect to RabbitMQ server
         /// </summary>
-        public string UserName { get; set; }
+        public string UserName { get; set; } = "guest";
 
         /// <summary>
         /// The password used to connect to RabbitMQ server
         /// </summary>
-        public string Password { get; set; }
+        public string Password { get; set; } = "guest";
+
+        public string QueueName { get; set; } = "Epic.Request";
     }
 }

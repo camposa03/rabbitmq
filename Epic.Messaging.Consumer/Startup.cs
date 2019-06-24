@@ -1,6 +1,9 @@
 ﻿using Epic.Messaging.Contracts;
 using Epic.Rabbit.Subscriber;
+using Epic.Rabbit.Subscriber.Models;
 using Epic.Rabbit.Subscriber.Settings;
+using Epic.Serializers;
+using Epic.Serializers.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +25,12 @@ namespace Epic.Messaging.Consumer
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<RabbitSettings>(Configuration.GetSection("RabbitSettings"));
+
+            
             services.AddSingleton<ISubscriber, Subscriber>();
+            services.AddSingleton<Serializer<string>, JsonSerializer>();
+            //Plug in your specific implementation
+            services.AddSingleton<IMessageProcessor<TestMessage, string>, MockMessageProcessor>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 

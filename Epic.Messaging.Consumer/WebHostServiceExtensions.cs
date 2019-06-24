@@ -9,11 +9,11 @@ namespace Epic.Messaging.Consumer
     public static class WebHostServiceExtensions
     {
       
-        public static void RunAsCustomService(this IWebHost host)
-        {
+        public static void RunAsCustomService(this IWebHost host, IOptions<RabbitSettings> settings)
+        {       
             var subscriber = host.Services.GetService(typeof(ISubscriber)) as ISubscriber ?? null;
-            var options = host.Services.GetService(typeof(RabbitSettings)) as RabbitSettings;
-            var webHostService = new CustomWebHostService(host, subscriber, Options.Create(options));
+            
+            var webHostService = new CustomWebHostService(host, subscriber, settings);
             ServiceBase.Run(webHostService);
         }
     }

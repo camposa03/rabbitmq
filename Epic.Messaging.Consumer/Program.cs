@@ -1,5 +1,8 @@
-﻿using Epic.Rabbit.Subscriber;
+﻿using Epic.Messaging.Contracts;
+using Epic.Rabbit.Subscriber;
+using Epic.Rabbit.Subscriber.Models;
 using Epic.Rabbit.Subscriber.Settings;
+using Epic.Serializers;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
@@ -16,6 +19,7 @@ namespace Epic.Messaging.Consumer
         {
 
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
+            //var isService = true;
             
             var builder = CreateWebHostBuilder(
                 args.Where(arg => arg != "--console").ToArray());
@@ -29,28 +33,30 @@ namespace Epic.Messaging.Consumer
 
             var host = builder.Build();
 
+            var options = host.Services.GetService(typeof(IOptions<RabbitSettings>)) as IOptions<RabbitSettings>;
+
             if (isService)
             {
                 // To run the app without the CustomWebHostService change the
                 // next line to host.RunAsService();
-                host.RunAsCustomService();
+                host.RunAsCustomService(options);
                 
             }
             else
             {
-                var options = host.Services.GetService(typeof(IOptions<RabbitSettings>)) as IOptions<RabbitSettings>;
-                   
-                ExecuteAsync("Epic.Request", options);
+                //var options = host.Services.GetService(typeof(IOptions<RabbitSettings>)) as IOptions<RabbitSettings>;
+                var messageProcessor = host.Services.GetService(typeof(IMessageProcessor<TestMessage, string>)) as IMessageProcessor<TestMessage, string>;
+                var serializer = host.Services.GetService(typeof(Serializer<string>)) as Serializer<string>;
+
+                ExecuteAsync("Epic.Request", options, messageProcessor, serializer);
 
                 Console.ReadLine();
             }
         }
 
-
-        private static void ExecuteAsync(string queueName, IOptions<RabbitSettings> options)
+        private static void ExecuteAsync(string queueName, IOptions<RabbitSettings> options, IMessageProcessor<TestMessage, string> processor, Serializer<string> serializer)
         {
-            
-            var subscriber = new Subscriber(options);
+            var subscriber = new Subscriber(options, processor, serializer);
             subscriber.Subscribe(queueName);
         }
 

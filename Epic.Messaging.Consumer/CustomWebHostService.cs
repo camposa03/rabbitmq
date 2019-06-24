@@ -1,5 +1,4 @@
 ﻿using Epic.Messaging.Contracts;
-using Epic.Rabbit.Subscriber;
 using Epic.Rabbit.Subscriber.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.WindowsServices;
@@ -47,11 +46,11 @@ namespace Epic.Messaging.Consumer
         protected override void OnStarted()
         {
             _logger.LogInformation("OnStarted method called.");
+            File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", _options.Hostname ?? string.Empty);
             base.OnStarted();
             try
             {
-                //var subscriber = new Subscriber(Options.Create(_options));
-                _subscriber.Subscribe("test");
+                _subscriber.Subscribe(_options.QueueName);
             }
             catch (Exception e)
             {

@@ -27,10 +27,15 @@ $> sc delete <name_of_service>
 
 install the service
 
+
+1. Before installing the service, make sure you delete any main arguments (i.e - "--console") to Program.cs to make sure that it'll run as a service.
 $> sc create <name_of_service> binPath= <path_to_exe_file>
 
+#########
+Example
+#########
 
-$> sc create rabbitSubscriber binPath= "C:\Users\Armando\Projects\dotnet\Epic.Messaging.Consumer\Epic.Messaging.Consumer\bin\Debug\netcoreapp2.1\win7-x64\publish\apphost.exe"
 
+$> sc create EpicRequestSubscriber binPath= "C:\Users\Mando\Projects\rabbitmq\Epic.Messaging.Consumer\bin\Debug\netcoreapp2.1\win7-x64\publish\Epic.Messaging.Consumer.exe"
 
-sc create rabbitSubscriber binPath= "C:\Users\Armando\Projects\dotnet\Epic.Messaging.Consumer\Epic.Messaging.Consumer\bin\Debug\netcoreapp2.1\win7-x64\publish\Epic.Messaging.Consumer.exe"
+#######################################
