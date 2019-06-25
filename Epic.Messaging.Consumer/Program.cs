@@ -1,6 +1,8 @@
 ﻿using Epic.Messaging.Contracts;
+using Epic.Messaging.Models.Person;
 using Epic.Rabbit.Subscriber;
 using Epic.Rabbit.Subscriber.Models;
+using Epic.Rabbit.Subscriber.Processors;
 using Epic.Rabbit.Subscriber.Settings;
 using Epic.Serializers;
 using Microsoft.AspNetCore;
@@ -45,19 +47,22 @@ namespace Epic.Messaging.Consumer
             else
             {
                 //var options = host.Services.GetService(typeof(IOptions<RabbitSettings>)) as IOptions<RabbitSettings>;
-                var messageProcessor = host.Services.GetService(typeof(IMessageProcessor<TestMessage, string>)) as IMessageProcessor<TestMessage, string>;
+                var messageProcessorFactory = host.Services.GetService(typeof(IMessageProcessorFactory)) as MessageProcessorFactory;
                 var serializer = host.Services.GetService(typeof(Serializer<string>)) as Serializer<string>;
 
-                ExecuteAsync("Epic.Request", options, messageProcessor, serializer);
+                ExecuteAsync("atlanta.request.person", options, messageProcessorFactory, serializer);
 
                 Console.ReadLine();
             }
         }
 
-        private static void ExecuteAsync(string queueName, IOptions<RabbitSettings> options, IMessageProcessor<TestMessage, string> processor, Serializer<string> serializer)
+        private static void ExecuteAsync(string queueName, IOptions<RabbitSettings> options, MessageProcessorFactory factory, Serializer<string> serializer)
         {
-            var subscriber = new Subscriber(options, processor, serializer);
-            subscriber.Subscribe(queueName);
+            var subscriber = new Subscriber(options, factory, serializer);
+            //subscriber.Subscribe(queueName);
+            subscriber.Subscribe(queueName, new PersonRequestData());
+
+            Console.ReadLine();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>

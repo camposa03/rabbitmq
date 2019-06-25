@@ -1,6 +1,7 @@
 ﻿using Epic.Messaging.Contracts;
 using Epic.Rabbit.Subscriber;
 using Epic.Rabbit.Subscriber.Models;
+using Epic.Rabbit.Subscriber.Processors;
 using Epic.Rabbit.Subscriber.Settings;
 using Epic.Serializers;
 using Epic.Serializers.Json;
@@ -31,6 +32,7 @@ namespace Epic.Messaging.Consumer
             services.AddSingleton<Serializer<string>, JsonSerializer>();
             //Plug in your specific implementation
             services.AddSingleton<IMessageProcessor<TestMessage, string>, MockMessageProcessor>();
+            services.AddSingleton<IMessageProcessorFactory, MessageProcessorFactory>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 

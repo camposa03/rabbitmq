@@ -3,16 +3,16 @@ using Epic.Messaging.Contracts;
 using Epic.Rabbit.Subscriber.Models;
 using System.Threading.Tasks;
 
-namespace Epic.Rabbit.Subscriber
+namespace Epic.Rabbit.Subscriber.Processors
 {
     /// <summary>
     /// Mock implementation of <see cref="IMessageProcessor{TMessage, TContent}"/>
     /// </summary>
-    public class MockMessageProcessor : IMessageProcessor<TestMessage, string>
+    public class MockMessageProcessor : IMessageProcessor<TestMessage,string>
     {
         public async Task<ContentResponseModel<string>> ProcessAsync(TestMessage message)
         {
-            await Task.Delay(2000);
+            await Task.Delay(1000);
             var response = new ContentResponseModel<string>()
             {
                 Successful = true,

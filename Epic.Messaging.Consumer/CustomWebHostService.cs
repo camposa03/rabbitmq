@@ -1,4 +1,6 @@
 ﻿using Epic.Messaging.Contracts;
+using Epic.Messaging.Models.Person;
+using Epic.Rabbit.Subscriber.Models;
 using Epic.Rabbit.Subscriber.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.WindowsServices;
@@ -50,7 +52,7 @@ namespace Epic.Messaging.Consumer
             base.OnStarted();
             try
             {
-                _subscriber.Subscribe(_options.QueueName);
+                _subscriber.Subscribe(_options.QueueName, new PersonRequestData());
             }
             catch (Exception e)
             {

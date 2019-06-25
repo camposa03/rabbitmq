@@ -1,5 +1,4 @@
 ﻿using Epic.Messaging.Contracts;
-using Epic.Rabbit.Subscriber.Models;
 using Epic.Rabbit.Subscriber.Settings;
 using Epic.Serializers;
 using Microsoft.Extensions.Options;
@@ -7,7 +6,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
 namespace Epic.Rabbit.Subscriber
@@ -18,18 +16,20 @@ namespace Epic.Rabbit.Subscriber
     public class Subscriber : ISubscriber
     {  
         private readonly RabbitSettings _options;
-        private readonly IMessageProcessor<TestMessage, string> _processor;
+        private readonly IMessageProcessorFactory _factory;
         private readonly Serializer<string> _serializer;
 
-        public Subscriber(IOptions<RabbitSettings> options, IMessageProcessor<TestMessage, string> processor, Serializer<string> serializer)
+        public Subscriber(IOptions<RabbitSettings> options, IMessageProcessorFactory factory, Serializer<string> serializer)
         {
             _options = options.Value;
-            _processor = processor ?? throw new ArgumentNullException(nameof(processor));
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public void ReceiveMessage(string queueName)
+        #region ISubscriber Members
+        public void Subscribe<TMessage>(string queueName, TMessage messageType) where TMessage : class
         {
+           
             var factory = new ConnectionFactory() { HostName = _options.Hostname, DispatchConsumersAsync = true };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
@@ -43,9 +43,10 @@ namespace Epic.Rabbit.Subscriber
                     var body = ea.Body;
                     var message = Encoding.UTF8.GetString(body);
 
-                    var testMessage = _serializer.Deserialize(message, new TestMessage());
+                    TMessage deserializedMessage = _serializer.Deserialize(message, messageType);
 
-                    var messageProcessorResponse = await _processor.ProcessAsync(testMessage);
+                    var messageProcessor = _factory.Create<TMessage, string>(deserializedMessage);
+                    var messageProcessorResponse = await messageProcessor.ProcessAsync(deserializedMessage);
                     var jsonMessage = _serializer.Serialize(messageProcessorResponse);
 
                     if (messageProcessorResponse.Successful)
@@ -76,67 +77,57 @@ namespace Epic.Rabbit.Subscriber
             }
         }
 
-        public void Subscribe(string queueName)
+        #endregion
+        public void SubscribeTest<TMessage>(string queueName, TMessage messageType) where TMessage : class
         {
-            var factory = new ConnectionFactory() { HostName = _options.Hostname, DispatchConsumersAsync = true };
-            var connection = factory.CreateConnection();
-            Debug.WriteLine("Connection created...");
 
-            
-            var channel = connection.CreateModel();
-            
-            channel.QueueDeclare(queue: queueName,
-                                    durable: true,
-                                    exclusive: false,
-                                    autoDelete: false,
-                                    arguments: null);
-
-            File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", "Created channel");
-
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += async (model, ea) =>
+            var factory = new ConnectionFactory() { HostName = _options.Hostname, VirtualHost = _options.VirtualHost};
+            using (var connection = factory.CreateConnection())
+            using (var channel = connection.CreateModel())
             {
-                   
-                var body = ea.Body;
-                var message = Encoding.UTF8.GetString(body);
 
-                TestMessage testMessage;
-                try
+                Console.WriteLine(" [*] Waiting for logs.");
+
+                var consumer = new EventingBasicConsumer(channel);
+                consumer.Received += async (model, ea) =>
                 {
-                    testMessage = _serializer.Deserialize(message, new TestMessage());
-                }
-                catch (Exception ex)
-                {
+                    var body = ea.Body;
+                    var message = Encoding.UTF8.GetString(body);
 
-                    throw;
-                }
-               
-                var messageProcessor = await _processor.ProcessAsync(testMessage);
+                    TMessage testMessage = _serializer.Deserialize(message, messageType);
 
-                if (messageProcessor.Successful)
-                {
-                    Debug.WriteLine(" [x] {0}", message);
-                    channel.BasicAck(ea.DeliveryTag, false);
-                }
-                else
-                {
-                    Debug.WriteLine("Error trying to process your message. Will send to error queue");
-                    channel.BasicNack(ea.DeliveryTag, false, true);
-                }
+                    var messageProcessor = _factory.Create<TMessage, string>(testMessage);
+                    var messageProcessorResponse = await messageProcessor.ProcessAsync(testMessage);
+                    var jsonMessage = _serializer.Serialize(messageProcessorResponse);
 
-                Console.WriteLine($"Message Received: {message}");
+                    if (messageProcessorResponse.Successful)
+                    {
+                        //Reply to originator
+                        var properties = ea.BasicProperties;
+                        var replyTo = properties.ReplyTo;
+                        channel.BasicPublish(exchange: string.Empty,
+                                             routingKey: replyTo,
+                                             basicProperties: null,
+                                             body: ToBytes(jsonMessage));
+                        Debug.WriteLine(" [x] {0}", message);
+                        channel.BasicAck(ea.DeliveryTag, false);
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Error trying to process your message. Will re-queue");
+                        channel.BasicNack(ea.DeliveryTag, false, true);
+                    }
 
-                File.AppendAllText("C:\\Temp\\rabbit_subscriber.txt", message);
-                    
-                Console.WriteLine($"Acknowledged message with DeliveryTag: {ea.DeliveryTag}");
+                };
+                channel.BasicConsume(queue: queueName,
+                                     autoAck: false,
+                                     consumer: consumer);
 
-            };
-
-            channel.BasicConsume(queue: queueName,
-                                    autoAck: false,
-                                    consumer: consumer);
-            
+                Console.WriteLine(" Press [enter] to exit.");
+                Console.ReadLine();
+            }
         }
+
         private byte[] ToBytes(string message) => Encoding.UTF8.GetBytes(message);
 
     }

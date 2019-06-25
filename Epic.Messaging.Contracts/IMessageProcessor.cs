@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 namespace Epic.Messaging.Contracts
 {
     /// <summary>
-    /// Contract to process an incoming message
+    /// Contract to process messages from a queue
     /// </summary>
-    /// <typeparam name="TMessage"></typeparam>
-    /// <typeparam name="TContent"></typeparam>
+    /// <typeparam name="TMessage">The type of message contained in a queue</typeparam>
+    /// <typeparam name="TContent">The type of message contained in the response from processing a message</typeparam>
     public interface IMessageProcessor<TMessage, TContent>
     {
         /// <summary>

@@ -1,7 +1,6 @@
 ﻿using Epic.Backend.Models;
 using Epic.Messaging.Contracts;
 using Epic.Messaging.Models.Person;
-using System;
 using System.Threading.Tasks;
 
 namespace Epic.Rabbit.Subscriber.Processors
@@ -11,9 +10,18 @@ namespace Epic.Rabbit.Subscriber.Processors
     /// </summary>
     public class PersonTargetMessageProcessor : IMessageProcessor<PersonRequestData, string>
     {
-        public Task<ContentResponseModel<string>> ProcessAsync(PersonRequestData message)
+        public async Task<ContentResponseModel<string>> ProcessAsync(PersonRequestData message)
         {
-            throw new NotImplementedException();
+            await Task.Delay(1000);
+            var response = new ContentResponseModel<string>()
+            {
+                Successful = true,
+                Message = "Successfully processed person Target request",
+                TransactionReceipt = message.Receipt.ToString(),
+                Content = "mock person target response"
+            };
+
+            return response;
         }
     }
 }

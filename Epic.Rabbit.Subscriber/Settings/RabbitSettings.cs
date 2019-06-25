@@ -22,5 +22,7 @@
         public string Password { get; set; } = "guest";
 
         public string QueueName { get; set; } = "Epic.Request";
+
+        public string VirtualHost { get; set; }
     }
 }
