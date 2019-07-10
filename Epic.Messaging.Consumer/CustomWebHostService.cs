@@ -52,6 +52,7 @@ namespace Epic.Messaging.Consumer
             base.OnStarted();
             try
             {
+        
                 _subscriber.Subscribe(_options.QueueName, new PersonRequestData());
             }
             catch (Exception e)

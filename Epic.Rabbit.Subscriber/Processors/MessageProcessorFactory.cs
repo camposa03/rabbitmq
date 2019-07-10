@@ -23,7 +23,6 @@ namespace Epic.Rabbit.Subscriber.Processors
 
             return messageProcessor;
         }
-
         
     }
 }

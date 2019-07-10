@@ -21,7 +21,6 @@ namespace Epic.Messaging.Consumer
         {
 
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
-            //var isService = true;
             
             var builder = CreateWebHostBuilder(
                 args.Where(arg => arg != "--console").ToArray());
